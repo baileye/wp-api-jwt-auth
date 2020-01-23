@@ -200,13 +200,17 @@ class Jwt_Auth_Public
         $token = $this->validate_token(false);
 
         if (is_wp_error($token)) {
-            if ($token->get_error_code() != 'jwt_auth_no_auth_header') {
+            if ($token->get_error_code() === 'jwt_auth_no_auth_header') {
+                if ($_SERVER['REQUEST_URI'] !== '/wp-json/jwt-auth/v1/token') {
+                    /** If there is a error, store it to show it after see rest_pre_dispatch */
+                    $this->jwt_error = $token;
+                }
+            } else {
                 /** If there is a error, store it to show it after see rest_pre_dispatch */
                 $this->jwt_error = $token;
-                return $user;
-            } else {
-                return $user;
             }
+        
+            return $user;
         }
         /** Everything is ok, return the user ID stored in the token*/
         return $token->data->user->id;
